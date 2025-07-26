@@ -1,0 +1,685 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Кубики</title>
+  <style>
+    :root {
+      --space-dark: #000000; 
+      --space-light: #333333; 
+      --space-accent: #8a6acd; 
+      --space-text: #ffffff; 
+      --space-highlight: #cccccc; 
+      --space-gray: #222222; 
+      --space-border: rgba(255, 255, 255, 0.2); 
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--space-dark);
+      color: var(--space-text);
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #starfield {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #000000, #0a0a0a);
+    }
+
+    .star {
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      animation: twinkle var(--duration, 5s) infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+      0%, 100% {
+        opacity: 0.2;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .dice-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: var(--space-gray);
+      border-radius: 8px;
+      border: 2px solid var(--space-accent); 
+      max-height: 180px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .dice-row {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 30px 0;
+      perspective: 1500px;
+    }
+
+    .dice-wrapper {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      perspective: 1000px;
+      z-index: 2;
+    }
+
+    .dice {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    }
+
+    .dice.held {
+      border: 3px solid var(--space-accent);
+      box-shadow: 0 0 20px rgba(138, 106, 205, 0.8);
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        box-shadow: 0 0 10px rgba(138, 106, 205, 0.6);
+      }
+      to {
+        box-shadow: 0 0 25px rgba(138, 106, 205, 1);
+      }
+    }
+
+    .face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(40, 40, 40, 0.9);
+      border: 2px solid var(--space-accent); 
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0;
+      backface-visibility: hidden;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+    }
+
+    .front {
+      transform: translateZ(40px);
+    }
+
+    .back {
+      transform: rotateY(180deg) translateZ(40px);
+    }
+
+    .right {
+      transform: rotateY(90deg) translateZ(40px);
+    }
+
+    .left {
+      transform: rotateY(-90deg) translateZ(40px);
+    }
+
+    .top {
+      transform: rotateX(90deg) translateZ(40px);
+    }
+
+    .bottom {
+      transform: rotateX(-90deg) translateZ(40px);
+    }
+
+    .face::before {
+      content: "";
+      display: block;
+      width: 15px;
+      height: 15px;
+      background: white;
+      border-radius: 50%;
+      box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8),
+        0 0 10px rgba(200, 200, 200, 0.6);
+    }
+
+    .face[data-value="1"]::before {
+      transform: none;
+    }
+
+    .face[data-value="2"]::before {
+      transform: translate(-12px, -12px);
+      box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8),
+        0 0 10px rgba(200, 200, 200, 0.6),
+        24px 24px 0 0 white;
+    }
+
+    .face[data-value="3"]::before {
+      transform: translate(-12px, -12px);
+      box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8),
+        0 0 10px rgba(200, 200, 200, 0.6),
+        24px 24px 0 0 white,
+        12px 12px 0 0 white;
+    }
+
+    .face[data-value="4"]::before {
+      transform: translate(-12px, -12px);
+      box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8),
+        0 0 10px rgba(200, 200, 200, 0.6),
+        24px 0 0 0 white,
+        0 24px 0 0 white,
+        24px 24px 0 0 white;
+    }
+
+    .face[data-value="5"]::before {
+      transform: translate(-12px, -12px);
+      box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8),
+        0 0 10px rgba(200, 200, 200, 0.6),
+        24px 0 0 0 white,
+        0 24px 0 0 white,
+        24px 24px 0 0 white,
+        12px 12px 0 0 white;
+    }
+
+    .face[data-value="6"]::before {
+      transform: translate(-12px, -12px);
+      box-shadow:
+        0 0 5px rgba(255, 255, 255, 0.8),
+        0 0 10px rgba(200, 200, 200, 0.6),
+        24px 0 0 0 white,
+        0 24px 0 0 white,
+        24px 24px 0 0 white,
+        0 0 0 0 white,
+        24px 12px 0 0 white,
+        0 12px 0 0 white;
+    }
+
+    .lever-container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 10px 0;
+    }
+
+    .lever {
+      width: 50px;
+      height: 100px;
+      background: linear-gradient(to right, #444, #333, #222);
+      border-radius: 8px;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.7);
+      transition: transform 0.3s;
+      z-index: 1;    
+    }
+
+    .lever-handle {
+      width: 70px;
+      height: 20px;
+      background: linear-gradient(to bottom, var(--space-accent), #6a4acd);
+      border-radius: 4px;
+      position: absolute;
+      top: 15px;
+      left: -10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .lever.pulled {
+      transform: rotate(-25deg);
+      transform-origin: bottom center;
+    }
+
+    .rolls-counter {
+      background: var(--space-light);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 1rem;
+      border: 2px solid var(--space-accent); 
+      min-width: 150px;
+      text-align: center;
+      z-index: 1;
+      pointer-events: none;
+      box-shadow: 0 0 10px rgba(138, 106, 205, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .dice-wrapper {
+        width: 60px;
+        height: 60px;
+      }
+
+      .face {
+        border-radius: 8px;
+      }
+
+      .front { transform: translateZ(30px); }
+      .back { transform: rotateY(180deg) translateZ(30px); }
+      .right { transform: rotateY(90deg) translateZ(30px); }
+      .left { transform: rotateY(-90deg) translateZ(30px); }
+      .top { transform: rotateX(90deg) translateZ(30px); }
+      .bottom { transform: rotateX(-90deg) translateZ(30px); }
+
+      .face::before {
+        width: 12px;
+        height: 12px;
+      }
+
+      .dice-row {
+        gap: 15px;
+      }
+
+      .lever {
+        width: 40px;
+        height: 80px;
+      }
+
+      .lever-handle {
+        width: 60px;
+        left: -10px;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div id="starfield"></div>
+  
+  <div class="dice-area">
+    <h3>КУБИКИ</h3>
+    <div class="dice-row">
+      <!-- Кубик 1 -->
+      <div class="dice-wrapper" data-index="0">
+        <div class="dice" id="dice1">
+          <div class="face front" data-value="1"></div>
+          <div class="face back" data-value="2"></div>
+          <div class="face right" data-value="3"></div>
+          <div class="face left" data-value="4"></div>
+          <div class="face top" data-value="5"></div>
+          <div class="face bottom" data-value="6"></div>
+        </div>
+      </div>
+
+      <!-- Кубик 2 -->
+      <div class="dice-wrapper" data-index="1">
+        <div class="dice" id="dice2">
+          <div class="face front" data-value="1"></div>
+          <div class="face back" data-value="2"></div>
+          <div class="face right" data-value="3"></div>
+          <div class="face left" data-value="4"></div>
+          <div class="face top" data-value="5"></div>
+          <div class="face bottom" data-value="6"></div>
+        </div>
+      </div>
+
+      <!-- Кубик 3 -->
+      <div class="dice-wrapper" data-index="2">
+        <div class="dice" id="dice3">
+          <div class="face front" data-value="1"></div>
+          <div class="face back" data-value="2"></div>
+          <div class="face right" data-value="3"></div>
+          <div class="face left" data-value="4"></div>
+          <div class="face top" data-value="5"></div>
+          <div class="face bottom" data-value="6"></div>
+        </div>
+      </div>
+
+      <!-- Кубик 4 -->
+      <div class="dice-wrapper" data-index="3">
+        <div class="dice" id="dice4">
+          <div class="face front" data-value="1"></div>
+          <div class="face back" data-value="2"></div>
+          <div class="face right" data-value="3"></div>
+          <div class="face left" data-value="4"></div>
+          <div class="face top" data-value="5"></div>
+          <div class="face bottom" data-value="6"></div>
+        </div>
+      </div>
+
+      <!-- Кубик 5 -->
+      <div class="dice-wrapper" data-index="4">
+        <div class="dice" id="dice5">
+          <div class="face front" data-value="1"></div>
+          <div class="face back" data-value="2"></div>
+          <div class="face right" data-value="3"></div>
+          <div class="face left" data-value="4"></div>
+          <div class="face top" data-value="5"></div>
+          <div class="face bottom" data-value="6"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lever-container">
+      <div class="lever" id="lever">
+        <div class="lever-handle"></div>
+      </div>
+      <div class="rolls-counter">Бросков: <span id="rollsCounter">3</span></div>
+    </div>
+  </div>
+
+  <script>
+    // Состояние игры
+    const gameState = {
+      diceValues: [1, 2, 3, 4, 5],
+      heldDice: [false, false, false, false, false],
+      rollsLeft: 3,
+      isRolling: false,
+      currentRotations: Array(5).fill().map(() => ({ x: 0, y: 0 }))
+    };
+
+    // Функция для остановки текущей анимации
+    function stopDiceAnimation(diceElement, index) {
+      diceElement.style.transition = 'none';
+      diceElement.style.transform = `rotateX(${gameState.currentRotations[index].x}deg) rotateY(${gameState.currentRotations[index].y}deg)`;
+    }
+
+    // Нормализация углов (приведение к диапазону 0-360)
+    function normalizeAngle(angle) {
+      return ((angle % 360) + 360) % 360;
+    }
+
+    // Элементы интерфейса
+    const elements = {
+      lever: document.getElementById('lever'),
+      rollsCounter: document.getElementById('rollsCounter'),
+      diceElements: [
+        document.getElementById('dice1'),
+        document.getElementById('dice2'),
+        document.getElementById('dice3'),
+        document.getElementById('dice4'),
+        document.getElementById('dice5')
+      ]
+    };
+
+    // Инициализация игры
+    function initGame() {
+      createStarfield();
+
+      // Обработчики кубиков
+      document.querySelectorAll('.dice-wrapper').forEach((wrapper, index) => {
+        wrapper.addEventListener('click', () => toggleHoldDice(index));
+      });
+
+      // Обработчик броска кубиков
+      elements.lever.addEventListener('click', rollDice);
+    }
+
+    // Создание звездного неба
+    function createStarfield() {
+      const starfield = document.getElementById('starfield');
+      if (!starfield) return;
+
+      const starCount = 200;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        // Случайные размеры и позиции
+        const size = Math.random() * 3;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+
+        // Случайная анимация
+        star.style.setProperty('--duration', `${5 + Math.random() * 10}s`);
+
+        starfield.appendChild(star);
+      }
+    }
+
+    // Получение трансформации для конкретного значения кубика
+    function getDiceTransform(value) {
+      const transforms = {
+        1: 'rotateX(0deg) rotateY(0deg)',
+        2: 'rotateY(180deg)',
+        3: 'rotateY(90deg)',
+        4: 'rotateY(-90deg)',
+        5: 'rotateX(90deg)',
+        6: 'rotateX(-90deg)'
+      };
+      return transforms[value] || transforms[1];
+    }
+
+    // Парсинг углов поворота из строки transform
+    function parseTargetRotation(transformString) {
+      const xMatch = transformString.match(/rotateX\(([^)]+)\)/);
+      const yMatch = transformString.match(/rotateY\(([^)]+)\)/);
+      
+      return {
+        x: xMatch ? parseFloat(xMatch[1]) : 0,
+        y: yMatch ? parseFloat(yMatch[1]) : 0
+      };
+    }
+
+    // Простая анимация без смены направления
+    function simpleRollAnimation(diceElement, index, isSlowAnimation = false) {
+      return new Promise((resolve) => {
+        const targetValue = gameState.diceValues[index];
+        const targetTransform = getDiceTransform(targetValue);
+        const targetRotation = parseTargetRotation(targetTransform);
+
+        // Нормализуем текущие углы
+        const currentX = normalizeAngle(gameState.currentRotations[index].x);
+        const currentY = normalizeAngle(gameState.currentRotations[index].y);
+
+        // Простое вращение без смены направления
+        const baseRotations = 2 + Math.floor(Math.random() * 2);
+        const finalXRotation = currentX + baseRotations * 360 + targetRotation.x;
+        const finalYRotation = currentY + baseRotations * 360 + targetRotation.y;
+
+        // Выбираем длительность в зависимости от типа анимации
+        const duration = isSlowAnimation ? 
+          4500 + Math.random() * 3500 : // ОЧЕНЬ медленная анимация (4.5-8 секунд)
+          1200 + Math.random() * 400;   // быстрая анимация
+        
+        diceElement.style.transition = `transform ${duration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+        diceElement.style.transform = `rotateX(${finalXRotation}deg) rotateY(${finalYRotation}deg)`;
+
+        // Сохраняем нормализованные углы
+        gameState.currentRotations[index].x = normalizeAngle(finalXRotation);
+        gameState.currentRotations[index].y = normalizeAngle(finalYRotation);
+
+        setTimeout(resolve, duration);
+      });
+    }
+
+    // Сложная анимация со сменой направления
+    function complexRollAnimation(diceElement, index, isSlowAnimation = false) {
+      return new Promise((resolve) => {
+        const targetValue = gameState.diceValues[index];
+        const targetTransform = getDiceTransform(targetValue);
+        const targetRotation = parseTargetRotation(targetTransform);
+
+        // Нормализуем текущие углы
+        const currentX = normalizeAngle(gameState.currentRotations[index].x);
+        const currentY = normalizeAngle(gameState.currentRotations[index].y);
+
+        // Генерируем случайное число оборотов
+        const baseRotations = 1 + Math.floor(Math.random() * 2);
+
+        // Перекрут для смены направления
+        const overshootX = 50 + Math.random() * 80;
+        const overshootY = 50 + Math.random() * 80;
+        
+        const overshootXRotation = currentX + baseRotations * 360 + targetRotation.x + overshootX;
+        const overshootYRotation = currentY + baseRotations * 360 + targetRotation.y + overshootY;
+        
+        // Финальная точная позиция
+        const finalXRotation = currentX + baseRotations * 360 + targetRotation.x;
+        const finalYRotation = currentY + baseRotations * 360 + targetRotation.y;
+        
+        // Первая фаза - основное вращение
+        const mainDuration = isSlowAnimation ? 
+          6000 + Math.random() * 5000 : // ОЧЕНЬ медленная анимация (6-9 секунд)
+          2000 + Math.random() * 800;   // быстрая анимация
+        
+        diceElement.style.transition = `transform ${mainDuration}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+        diceElement.style.transform = `rotateX(${overshootXRotation}deg) rotateY(${overshootYRotation}deg)`;
+        
+        setTimeout(() => {
+          // Длительная пауза для создания напряжения
+          setTimeout(() => {
+            // Финальная фаза - очень медленный докрут до точной позиции
+            const settleDuration = isSlowAnimation ? 
+              1500 + Math.random() * 1000 : // Еще медленнее финальный докрут (1.5-2.5 секунды)
+              800 + Math.random() * 400;    // быстрая анимация
+            
+            diceElement.style.transition = `transform ${settleDuration}ms cubic-bezier(0.05, 0.9, 0.05, 1)`;
+            diceElement.style.transform = `rotateX(${finalXRotation}deg) rotateY(${finalYRotation}deg)`;
+            
+            // Сохраняем нормализованные углы
+            gameState.currentRotations[index].x = normalizeAngle(finalXRotation);
+            gameState.currentRotations[index].y = normalizeAngle(finalYRotation);
+            
+            setTimeout(resolve, settleDuration);
+          }, isSlowAnimation ? 200 : 10); // Более длительная пауза для медленных кубиков
+        }, mainDuration);
+      });
+    }
+
+    // Естественная анимация кубика
+    function rollDiceElement(diceElement, index, isSlowAnimation, useComplexAnimation) {
+      return new Promise((resolve) => {
+        if (gameState.heldDice[index]) {
+          // Подрагивание для удержанных кубиков
+          diceElement.style.transform += ' translateY(-3px)';
+          setTimeout(() => {
+            diceElement.style.transform = diceElement.style.transform.replace(' translateY(-3px)', '');
+            resolve();
+          }, 300);
+          return;
+        }
+
+        // Сбрасываем текущую анимацию
+        stopDiceAnimation(diceElement, index);
+
+        // Даем браузеру время применить сброс
+        requestAnimationFrame(() => {
+          if (useComplexAnimation) {
+            complexRollAnimation(diceElement, index, isSlowAnimation).then(resolve);
+          } else {
+            simpleRollAnimation(diceElement, index, isSlowAnimation).then(resolve);
+          }
+        });
+      });
+    }
+
+    // Бросить кубики
+    function rollDice() {
+      if (gameState.rollsLeft <= 0 || gameState.isRolling) return;
+
+      // Сбрасываем все текущие анимации
+      elements.diceElements.forEach((dice, index) => {
+        stopDiceAnimation(dice, index);
+      });
+      
+      gameState.isRolling = true;
+
+      // Анимация рычага
+      elements.lever.classList.add('pulled');
+      setTimeout(() => {
+        elements.lever.classList.remove('pulled');
+      }, 500);
+
+      // Генерируем новые значения для не удержанных кубиков
+      for (let i = 0; i < 5; i++) {
+        if (!gameState.heldDice[i]) {
+          gameState.diceValues[i] = Math.floor(Math.random() * 6) + 1;
+        }
+      }
+
+      // Определяем активные кубики (не удержанные)
+      const activeDiceIndices = [];
+      for (let i = 0; i < 5; i++) {
+        if (!gameState.heldDice[i]) {
+          activeDiceIndices.push(i);
+        }
+      }
+
+      // Определяем количество медленных кубиков (1-2, но они будут ОЧЕНЬ медленными)
+      const slowDiceCount = Math.min(
+        1 + Math.floor(Math.random() * 2), // от 1 до 2
+        activeDiceIndices.length
+      );
+
+      // Определяем количество кубиков со сложной анимацией (1-3)
+      const complexDiceCount = Math.min(
+        1 + Math.floor(Math.random() * 3), // от 1 до 3
+        activeDiceIndices.length
+      );
+
+      // Выбираем случайные кубики для медленной анимации
+      const slowDiceIndices = [];
+      for (let i = 0; i < slowDiceCount; i++) {
+        let randomIndex;
+        do {
+          randomIndex = activeDiceIndices[Math.floor(Math.random() * activeDiceIndices.length)];
+        } while (slowDiceIndices.includes(randomIndex));
+        slowDiceIndices.push(randomIndex);
+      }
+
+      // Выбираем случайные кубики для сложной анимации
+      const complexDiceIndices = [];
+      for (let i = 0; i < complexDiceCount; i++) {
+        let randomIndex;
+        do {
+          randomIndex = activeDiceIndices[Math.floor(Math.random() * activeDiceIndices.length)];
+        } while (complexDiceIndices.includes(randomIndex));
+        complexDiceIndices.push(randomIndex);
+      }
+
+      // Запуск анимации для всех кубиков с небольшой задержкой между ними
+      const rollPromises = elements.diceElements.map((dice, index) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            const isSlowAnimation = slowDiceIndices.includes(index);
+            const useComplexAnimation = complexDiceIndices.includes(index);
+            rollDiceElement(dice, index, isSlowAnimation, useComplexAnimation).then(resolve);
+          }, index * 100);
+        });
+      });
+
+      Promise.all(rollPromises).then(() => {
+        gameState.rollsLeft--;
+        elements.rollsCounter.textContent = gameState.rollsLeft;
+        gameState.isRolling = false;
+      });
+    }
+
+    // Переключить удержание кубика
+    function toggleHoldDice(index) {
+      if (gameState.isRolling) return;
+
+      gameState.heldDice[index] = !gameState.heldDice[index];
+      const dice = document.querySelectorAll('.dice-wrapper')[index].querySelector('.dice');
+      dice.classList.toggle('held', gameState.heldDice[index]);
+    }
+
+    window.addEventListener('DOMContentLoaded', initGame);
+  </script>
+</body>
+</html>
